@@ -9,8 +9,7 @@ select
     CONCAT(p.f_name, ' ', p.l_name) as pName,
     COUNT(*) as sCount
 from patients9171 p
-inner join surgeryrecord9171 sr
-on p.patient_id = sr.patient_id
+inner join surgeryrecord9171 sr on p.patient_id = sr.patient_id
 group by pID
 order by sCount desc;
 
@@ -23,8 +22,7 @@ select
     CONCAT(d.f_name, ' ', d.l_name) as dName,
     IFNULL(SUM(a.payment_amount), 0) as dTotalAmountEarned
 from doctor9171 as d
-left join appointment9171 a
-on d.doct_id = a.doct_id
+left join appointment9171 a on d.doct_id = a.doct_id
 group by dID
 order by dTotalAmountEarned desc;
 
@@ -85,9 +83,49 @@ select
 	a.appointment_status as aStatus,
     count(*) as numCancelledAppts
 from patients9171 as p
-left join appointment9171 a
-on p.patient_id = a.patient_id
+left join appointment9171 a on p.patient_id = a.patient_id
 where a.appointment_status = 'Cancelled'
 group by p.patient_id
-having count(*) > 1;
+having count(*) > 1
+order by lName;
 
+-- 5. List all helpers who have not been allocated to a staff shift. Show
+-- 		Dept ID, name
+-- 		Helper ID, full name 
+-- Sort by Dept ID, full name
+select
+	'1729171' as StuID,
+	d.dept_id as deptID,
+    d.dept_name as deptName,
+    h.helper_id as hID,
+    CONCAT(h.f_name, ' ', h.l_name) as hName
+from helpers9171 h
+left join staffshift9171 ss on h.helper_id = ss.helper_id
+left join department9171 d on h.dept_id = d.dept_id
+where ss.shift_id is null
+order by deptID, hName;
+
+-- 6. Total payments per calendar year, per payment method. Show:
+-- 		Full total in first row
+-- 		Subsequent rows: calendar year, mode of payment, money received ...
+-- 		... ordered by year, mode of payment
+select
+	'1729171' as StuID,
+	year(appointment_date) as calendarYear,
+    mode_of_payment as modeOfPayment,
+    sum(payment_amount) as paymentsTotal,
+    1 as rowType,
+    year(appointment_date) as sortYear
+from appointment9171
+group by year(appointment_date), mode_of_payment
+union all
+select
+	'1729171' as StuID,
+    '' as calendarYear,
+    'Total' as modeOfPayment,
+    sum(payment_amount) as paymentsTotal,
+    0 as rowType,
+    year(appointment_date) as sortYear
+from appointment9171
+group by year(appointment_date)
+order by sortYear asc, rowType asc, modeOfPayment asc;
