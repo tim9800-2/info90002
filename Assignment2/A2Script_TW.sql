@@ -76,6 +76,7 @@ from staffshift9171;
 -- 		how many apt cancelled
 -- Order by last name
 select
+	'1729171' as StuID,
 	p.patient_id as pID,
     p.l_name as lName,
     p.f_name as fName,
@@ -144,3 +145,62 @@ from doctor9171 d
 left join surgeryrecord9171 sr
 on d.doct_id = sr.surgeon_id
 group by IFNULL(year(sr.surgery_date), ''), d.doct_id;
+
+-- 8. For each letter, list number of patients whose last name begins
+-- with that letter. Hint: LEFT(string, n)
+select
+	'1729171' as StuID,
+	left(p.l_name, 1) as Letter,
+    count(*) as HowMany
+from patients9171 p
+group by Letter
+order by Letter;
+
+-- 9. Which patient(s) has the highest number of appointments? Show:
+-- 		patientID, fullname as "[lastName], [firstName]"
+-- 		number of appointments
+select
+	'1729171' as StuID,
+    p.patient_id as pID,
+    CONCAT(l_name, ', ', f_name) as pName,
+    count(*) as numAppts
+from patients9171 p
+inner join appointment9171 a
+on p.patient_id = a.patient_id
+group by p.patient_id
+having count(*) >= ALL(
+	select count(*)
+    from appointment9171 a2
+    group by a2.patient_id
+);
+
+-- 10a. Add yourself as a patient
+insert into patients9171
+	values(1729171, 'Timothy', 'Wong', 'M', '1999-12-25', '0467897622', '1 Park Road, Carlton VIC 3010, Australia');
+    
+-- 10b. Schedule an appt with Dr. Sonia Ali on any date in Oct 2026.
+-- 		Appointment status should be "scheduled"
+-- 		In person, no payment details
+-- 		Done as transaction: retrieve dr ID first, then save appt details
+start transaction;
+-- Step 1. Find Dr. Sonia Ali's ID (1018)
+select
+	'1729171' as StuID,
+	doct_id as `Dr. Sonia Ali's ID` 
+from doctor9171
+where l_name = 'Ali' and f_name = 'Dr. Sonia' and doct_id;
+
+-- Step 2. Find the last appointment number (5999)
+select
+	'1729171' as StuID,
+    max(appointment_id) as `Last appointment number`
+from appointment9171;
+
+-- Step 3. Schedule an appointment
+insert into appointment9171(appointment_id, patient_id, doctor_id, appointment_date, appointment_status)
+	values(6000, 1729171, 1018, '2026-10-15', 'Scheduled');
+
+commit;
+
+
+
