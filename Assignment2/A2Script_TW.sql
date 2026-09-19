@@ -129,3 +129,18 @@ select
 from appointment9171
 group by year(appointment_date)
 order by sortYear asc, rowType asc, modeOfPayment asc;
+
+-- 7. List the number of surgeries performed by each surgeon per year. Show
+-- 		Year when the surgery performed
+-- 		Surgeon ID, last name
+-- 		Number of surgeries performed
+select
+	'1729171' as StuID,
+	d.doct_id as sID,
+    d.l_name as sLastName,
+	IFNULL(year(sr.surgery_date), '') as yearOfSurgery,
+    IFNULL(COUNT(surgery_id), 0) as numSurgeries
+from doctor9171 d
+left join surgeryrecord9171 sr
+on d.doct_id = sr.surgeon_id
+group by IFNULL(year(sr.surgery_date), ''), d.doct_id;
