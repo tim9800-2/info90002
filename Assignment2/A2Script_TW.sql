@@ -1,73 +1,54 @@
 -- Testing
 -- SELECT '1729171' as StuID, d.*
 -- FROM department9171 d;
+USE hospitalmanagementsystem;
+USE trwong;
 
 -- 1. How many surgeries did each patient have?
-select
-	'1729171' as StuID,
-    p.patient_id as pID,
-    CONCAT(p.f_name, ' ', p.l_name) as pName,
-    COUNT(*) as sCount
-from patients9171 p
-inner join surgeryrecord9171 sr on p.patient_id = sr.patient_id
-group by pID
-order by sCount desc;
+SELECT
+	'1729171' AS StuID,
+    p.patient_id AS pID,
+    CONCAT(p.f_name, ' ', p.l_name) AS pName,
+    COUNT(*) AS sCount
+FROM patients9171 p
+INNER JOIN surgeryrecord9171 sr ON p.patient_id = sr.patient_id
+GROUP BY pID
+ORDER BY sCount DESC;
 
 -- 2. List of doctors, showing total amount earned from appointments.
 -- List should include: Drs with no appts
 -- Variables: doctor IDs, names, total amounts, ordered high to low
-select
-	'1729171' as StuID,
-    d.doct_id as dID,
-    CONCAT(d.f_name, ' ', d.l_name) as dName,
-    IFNULL(SUM(a.payment_amount), 0) as dTotalAmountEarned
-from doctor9171 as d
-left join appointment9171 a on d.doct_id = a.doct_id
-group by dID
-order by dTotalAmountEarned desc;
+SELECT
+	'1729171' AS StuID,
+    d.doct_id AS dID,
+    CONCAT(d.f_name, ' ', d.l_name) AS dName,
+    IFNULL(SUM(a.payment_amount), 0) AS dTotalAmountEarned
+FROM doctor9171 AS d
+LEFT JOIN appointment9171 a ON d.doct_id = a.doct_id
+GROUP BY dID
+ORDER BY dTotalAmountEarned DESC;
 
 -- 3. Produce a report that shows number of shifts with
 -- 		Only doctors on duty
 -- 		Only nurses on duty
 -- 		Only helpers on duty
-select
-	'1729171' as StuID,
-    'doctor shift' as `Staff on duty`,
-    COUNT(*) as `Total shifts`
-from staffshift9171
-where (nurse_id is null and helper_id is null) and doct_id is not null
-union all
-select 
-	'1729171' as StuID,
-    'nurse shift' as `Staff on duty`,
-    COUNT(*) as `Total shifts`
-from staffshift9171
-where (doct_id is null and helper_id is null) and nurse_id is not null
-union all
-select 
-	'1729171' as StuID,
-    'helper shift' as `Staff on duty`,
-    COUNT(*) as `Total shifts`
-from staffshift9171
-where (doct_id is null and nurse_id is null) and helper_id is not null;
-
-select
-	'1729171' as StuID,
-    'doctor shift' as `Staff on duty`,
-    SUM(doct_id is not null and nurse_id is null and helper_id is null) as `Total shifts`
-from staffshift9171
-union all
-select 
-	'1729171' as StuID,
-    'nurse shift' as `Staff on duty`,
-    SUM(doct_id is null and nurse_id is not null and helper_id is null) as `Total shifts`
-from staffshift9171
-union all
-select 
-	'1729171' as StuID,
-    'helper shift' as `Staff on duty`,
-    SUM(doct_id is null and nurse_id is null and helper_id is not null) as `Total shifts`
-from staffshift9171;
+SELECT
+	'1729171' AS StuID,
+    'doctor shift' AS `Staff on duty`,
+    SUM(doct_id IS NOT NULL AND nurse_id IS NULL AND helper_id IS NULL) AS `Total shifts`
+FROM staffshift9171
+UNION ALL
+SELECT 
+	'1729171' AS StuID,
+    'nurse shift' AS `Staff on duty`,
+    SUM(doct_id IS NULL AND nurse_id IS NOT NULL AND helper_id IS NULL) AS `Total shifts`
+FROM staffshift9171
+UNION ALL
+SELECT 
+	'1729171' AS StuID,
+    'helper shift' AS `Staff on duty`,
+    SUM(doct_id IS NULL AND nurse_id IS NULL AND helper_id IS NOT NULL) AS `Total shifts`
+FROM staffshift9171;
 
 -- 4. List all patients with more than one cancelled appointment. Show
 -- 		patient ID
@@ -75,132 +56,187 @@ from staffshift9171;
 -- 		gender
 -- 		how many apt cancelled
 -- Order by last name
-select
-	'1729171' as StuID,
-	p.patient_id as pID,
-    p.l_name as lName,
-    p.f_name as fName,
+SELECT
+	'1729171' AS StuID,
+	p.patient_id AS pID,
+    p.l_name AS lName,
+    p.f_name AS fName,
     p.gender,
-	a.appointment_status as aStatus,
-    count(*) as numCancelledAppts
-from patients9171 as p
-left join appointment9171 a on p.patient_id = a.patient_id
-where a.appointment_status = 'Cancelled'
-group by p.patient_id
-having count(*) > 1
-order by lName;
+	a.appointment_status AS aStatus,
+    COUNT(*) AS numCancelledAppts
+FROM patients9171 AS p
+LEFT JOIN appointment9171 a ON p.patient_id = a.patient_id
+WHERE a.appointment_status = 'Cancelled'
+GROUP BY p.patient_id
+HAVING COUNT(*) > 1
+ORDER BY lName;
+
 
 -- 5. List all helpers who have not been allocated to a staff shift. Show
 -- 		Dept ID, name
 -- 		Helper ID, full name 
 -- Sort by Dept ID, full name
-select
-	'1729171' as StuID,
-	d.dept_id as deptID,
-    d.dept_name as deptName,
-    h.helper_id as hID,
-    CONCAT(h.f_name, ' ', h.l_name) as hName
-from helpers9171 h
-left join staffshift9171 ss on h.helper_id = ss.helper_id
-left join department9171 d on h.dept_id = d.dept_id
-where ss.shift_id is null
-order by deptID, hName;
+SELECT
+	'1729171' AS StuID,
+	d.dept_id AS deptID,
+    d.dept_name AS deptName,
+    h.helper_id AS hID,
+    CONCAT(h.f_name, ' ', h.l_name) AS hName
+FROM helpers9171 h
+LEFT JOIN staffshift9171 ss ON h.helper_id = ss.helper_id
+LEFT JOIN department9171 d ON h.dept_id = d.dept_id
+WHERE ss.shift_id IS NULL
+ORDER BY deptID, hName;
 
 -- 6. Total payments per calendar year, per payment method. Show:
 -- 		Full total in first row
 -- 		Subsequent rows: calendar year, mode of payment, money received ...
 -- 		... ordered by year, mode of payment
-select
-	'1729171' as StuID,
-	year(appointment_date) as calendarYear,
-    mode_of_payment as modeOfPayment,
-    sum(payment_amount) as paymentsTotal,
-    1 as rowType,
-    year(appointment_date) as sortYear
-from appointment9171
-group by year(appointment_date), mode_of_payment
-union all
-select
-	'1729171' as StuID,
-    '' as calendarYear,
-    'Total' as modeOfPayment,
-    sum(payment_amount) as paymentsTotal,
-    0 as rowType,
-    year(appointment_date) as sortYear
-from appointment9171
-group by year(appointment_date)
-order by sortYear asc, rowType asc, modeOfPayment asc;
+SELECT
+	'1729171' AS StuID,
+	YEAR(appointment_date) AS calendarYear,
+    mode_of_payment AS modeOfPayment,
+    SUM(payment_amount) AS paymentsTotal,
+    1 AS rowType,
+    YEAR(appointment_date) AS sortYear
+FROM appointment9171
+GROUP BY YEAR(appointment_date), mode_of_payment
+UNION ALL
+SELECT
+	'1729171' AS StuID,
+    '' AS calendarYear,
+    'Total' AS modeOfPayment,
+    SUM(payment_amount) AS paymentsTotal,
+    0 AS rowType,
+    YEAR(appointment_date) AS sortYear
+FROM appointment9171
+GROUP BY YEAR(appointment_date)
+ORDER BY sortYear ASC, rowType ASC, modeOfPayment ASC;
+
 
 -- 7. List the number of surgeries performed by each surgeon per year. Show
 -- 		Year when the surgery performed
 -- 		Surgeon ID, last name
 -- 		Number of surgeries performed
-select
-	'1729171' as StuID,
-	d.doct_id as sID,
-    d.l_name as sLastName,
-	IFNULL(year(sr.surgery_date), '') as yearOfSurgery,
-    IFNULL(COUNT(surgery_id), 0) as numSurgeries
-from doctor9171 d
-left join surgeryrecord9171 sr
-on d.doct_id = sr.surgeon_id
-group by IFNULL(year(sr.surgery_date), ''), d.doct_id;
+SELECT
+	'1729171' AS StuID,
+	d.doct_id AS sID,
+    d.l_name AS sLastName,
+	IFNULL(YEAR(sr.surgery_date), '') AS yearOfSurgery,
+    IFNULL(COUNT(surgery_id), 0) AS numSurgeries
+FROM doctor9171 d
+LEFT JOIN surgeryrecord9171 sr
+ON d.doct_id = sr.surgeon_id
+GROUP BY IFNULL(YEAR(sr.surgery_date), ''), d.doct_id;
+
 
 -- 8. For each letter, list number of patients whose last name begins
 -- with that letter. Hint: LEFT(string, n)
-select
-	'1729171' as StuID,
-	left(p.l_name, 1) as Letter,
-    count(*) as HowMany
-from patients9171 p
-group by Letter
-order by Letter;
+SELECT
+	'1729171' AS StuID,
+	LEFT(p.l_name, 1) AS Letter,
+    COUNT(*) AS HowMany
+FROM patients9171 p
+GROUP BY Letter
+ORDER BY Letter;
+
 
 -- 9. Which patient(s) has the highest number of appointments? Show:
 -- 		patientID, fullname as "[lastName], [firstName]"
 -- 		number of appointments
-select
-	'1729171' as StuID,
-    p.patient_id as pID,
-    CONCAT(l_name, ', ', f_name) as pName,
-    count(*) as numAppts
-from patients9171 p
-inner join appointment9171 a
-on p.patient_id = a.patient_id
-group by p.patient_id
-having count(*) >= ALL(
-	select count(*)
-    from appointment9171 a2
-    group by a2.patient_id
+SELECT
+	'1729171' AS StuID,
+    p.patient_id AS pID,
+    CONCAT(l_name, ', ', f_name) AS pName,
+    COUNT(*) AS numAppts
+FROM patients9171 p
+INNER JOIN appointment9171 a
+ON p.patient_id = a.patient_id
+GROUP BY p.patient_id
+HAVING COUNT(*) >= ALL(
+	SELECT COUNT(*)
+    FROM appointment9171 a2
+    GROUP BY a2.patient_id
 );
 
 -- 10a. Add yourself as a patient
-insert into patients9171
-	values(1729171, 'Timothy', 'Wong', 'M', '1999-12-25', '0467897622', '1 Park Road, Carlton VIC 3010, Australia');
+INSERT INTO patients9171
+	VALUES(1729171, 'Timothy', 'Wong', 'M', '1999-12-25', '0467897622', '1 Park Road, Carlton VIC 3010, Australia');
+
     
 -- 10b. Schedule an appt with Dr. Sonia Ali on any date in Oct 2026.
 -- 		Appointment status should be "scheduled"
 -- 		In person, no payment details
 -- 		Done as transaction: retrieve dr ID first, then save appt details
-start transaction;
--- Step 1. Find Dr. Sonia Ali's ID (1018)
-select
-	'1729171' as StuID,
-	doct_id as `Dr. Sonia Ali's ID` 
-from doctor9171
-where l_name = 'Ali' and f_name = 'Dr. Sonia' and doct_id;
-
--- Step 2. Find the last appointment number (5999)
-select
-	'1729171' as StuID,
-    max(appointment_id) as `Last appointment number`
-from appointment9171;
-
+START TRANSACTION;
+-- Step 1. Find Dr. Sonia Ali's ID
+SET @DrSoniaAliID = (
+	SELECT doct_id AS `Dr. Sonia Ali's ID`
+	FROM doctor9171
+	WHERE l_name = 'Ali' AND f_name = 'Dr. Sonia'
+);
+-- Step 2. Find the last appointment number
+SET @LastApptNum = (
+	SELECT MAX(appointment_id) AS `Last appointment number`
+	FROM appointment9171
+);
 -- Step 3. Schedule an appointment
-insert into appointment9171(appointment_id, patient_id, doctor_id, appointment_date, appointment_status)
-	values(6000, 1729171, 1018, '2026-10-15', 'Scheduled');
+INSERT INTO appointment9171(appointment_id, patient_id, doct_id, appointment_date, appointment_status)
+	VALUES(@LastApptNum + 1, 1729171, @DrSoniaAliID, '2026-10-15', 'Scheduled');
+COMMIT;
 
-commit;
+-- 10c. Create statement showing my ID, name, appt details including
+-- 		appt id
+-- 		doctor's id and full name ([lName], [fName]),
+-- 		date, mode of appt, status of appt
+SELECT
+	'1729171' AS StuID,
+    p.patient_id AS pID,
+    CONCAT(p.l_name, ', ', p.f_name) AS pName,
+    appointment_id AS apptID,
+    d.doct_id AS dID,
+    CONCAT(d.l_name, ', ', d.f_name) AS dName,
+    appointment_date AS apptDate,
+    mode_of_appointment AS apptMode,
+    mode_of_payment AS paymentMode,
+    appointment_status AS apptStatus
+FROM patients9171 p
+LEFT JOIN appointment9171 a ON p.patient_id = a.patient_id
+LEFT JOIN doctor9171 d ON d.doct_id = a.doct_id
+WHERE p.patient_id = 1729171;
 
+-- 11a. Create a view that counts num. of wards per dept. Your list should include:
+-- 		deptID, deptName, numWards
+-- DO NOT include StuID. In addition to code, provide:
+-- 		Screenshot of list of tables and views in the left pane, showing the created view
+-- 		The result of running select from your view (recommend showing the SELECT statement used to create the view)
+
+CREATE VIEW WardCount AS
+	SELECT 
+		d.dept_id AS deptID,
+		d.dept_name AS deptName,
+		COUNT(*) AS numWards
+	FROM department9171 d
+	LEFT JOIN ward9171 w ON d.dept_id = w.dept_id
+	GROUP BY d.dept_id;
+
+SELECT 
+		d.dept_id AS deptID,
+		d.dept_name AS deptName,
+		COUNT(*) AS numWards
+	FROM department9171 d
+	LEFT JOIN ward9171 w ON d.dept_id = w.dept_id
+	GROUP BY d.dept_id;
+    
+-- 11b. Using the view, list depts with the highest number of wards. Show
+-- 		deptID, deptName, numWards and STUDENT ID
+SELECT
+	'1729171' AS StuID,
+    WardCount.*
+FROM WardCount
+WHERE numWards = (
+	SELECT MAX(numWards)
+    FROM WardCount
+);
 
 
