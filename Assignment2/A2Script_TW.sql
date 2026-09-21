@@ -9,11 +9,11 @@ SELECT
 	'1729171' AS StuID,
     p.patient_id AS pID,
     CONCAT(p.f_name, ' ', p.l_name) AS pName,
-    COUNT(*) AS sCount
+    COUNT(*) AS surgeryCount
 FROM patients9171 p
 INNER JOIN surgeryrecord9171 sr ON p.patient_id = sr.patient_id
 GROUP BY pID
-ORDER BY sCount DESC;
+ORDER BY surgeryCount DESC;
 
 -- 2. List of doctors, showing total amount earned from appointments.
 -- List should include: Drs with no appts
@@ -22,11 +22,11 @@ SELECT
 	'1729171' AS StuID,
     d.doct_id AS dID,
     CONCAT(d.f_name, ' ', d.l_name) AS dName,
-    IFNULL(SUM(a.payment_amount), 0) AS dTotalAmountEarned
+    SUM(a.payment_amount) AS totalAmountEarned
 FROM doctor9171 AS d
 LEFT JOIN appointment9171 a ON d.doct_id = a.doct_id
 GROUP BY dID
-ORDER BY dTotalAmountEarned DESC;
+ORDER BY totalAmountEarned DESC;
 
 -- 3. Produce a report that shows number of shifts with
 -- 		Only doctors on duty
@@ -80,13 +80,13 @@ SELECT
 	'1729171' AS StuID,
 	d.dept_id AS deptID,
     d.dept_name AS deptName,
-    h.helper_id AS hID,
-    CONCAT(h.f_name, ' ', h.l_name) AS hName
+    h.helper_id AS helperID,
+    CONCAT(h.f_name, ' ', h.l_name) AS helperName
 FROM helpers9171 h
 LEFT JOIN staffshift9171 ss ON h.helper_id = ss.helper_id
 LEFT JOIN department9171 d ON h.dept_id = d.dept_id
 WHERE ss.shift_id IS NULL
-ORDER BY deptID, hName;
+ORDER BY deptID, helperName;
 
 -- 6. Total payments per calendar year, per payment method. Show:
 -- 		Full total in first row
@@ -120,14 +120,15 @@ ORDER BY sortYear ASC, rowType ASC, modeOfPayment ASC;
 -- 		Number of surgeries performed
 SELECT
 	'1729171' AS StuID,
-	d.doct_id AS sID,
-    d.l_name AS sLastName,
-	IFNULL(YEAR(sr.surgery_date), '') AS yearOfSurgery,
-    IFNULL(COUNT(surgery_id), 0) AS numSurgeries
+	d.doct_id AS surgeonID,
+    d.l_name AS surgeonLastName,
+	YEAR(sr.surgery_date) AS yearOfSurgery,
+    COUNT(surgery_id) AS numSurgeries
 FROM doctor9171 d
 LEFT JOIN surgeryrecord9171 sr
 ON d.doct_id = sr.surgeon_id
-GROUP BY IFNULL(YEAR(sr.surgery_date), ''), d.doct_id;
+GROUP BY YEAR(sr.surgery_date), d.doct_id
+ORDER BY numSurgeries DESC;
 
 
 -- 8. For each letter, list number of patients whose last name begins
@@ -171,14 +172,12 @@ INSERT INTO patients9171
 START TRANSACTION;
 -- Step 1. Find Dr. Sonia Ali's ID
 SET @DrSoniaAliID = (
-	SELECT doct_id AS `Dr. Sonia Ali's ID`
-	FROM doctor9171
+	SELECT doct_id FROM doctor9171
 	WHERE l_name = 'Ali' AND f_name = 'Dr. Sonia'
 );
 -- Step 2. Find the last appointment number
 SET @LastApptNum = (
-	SELECT MAX(appointment_id) AS `Last appointment number`
-	FROM appointment9171
+	SELECT MAX(appointment_id) FROM appointment9171
 );
 -- Step 3. Schedule an appointment
 INSERT INTO appointment9171(appointment_id, patient_id, doct_id, appointment_date, appointment_status)
@@ -209,7 +208,6 @@ WHERE p.patient_id = 1729171;
 -- 		deptID, deptName, numWards
 -- DO NOT include StuID. In addition to code, provide:
 -- 		Screenshot of list of tables and views in the left pane, showing the created view
--- 		The result of running select from your view (recommend showing the SELECT statement used to create the view)
 
 CREATE VIEW WardCount AS
 	SELECT 
@@ -220,13 +218,14 @@ CREATE VIEW WardCount AS
 	LEFT JOIN ward9171 w ON d.dept_id = w.dept_id
 	GROUP BY d.dept_id;
 
-SELECT 
-		d.dept_id AS deptID,
-		d.dept_name AS deptName,
-		COUNT(*) AS numWards
-	FROM department9171 d
-	LEFT JOIN ward9171 w ON d.dept_id = w.dept_id
-	GROUP BY d.dept_id;
+-- 		The result of running select from your view (recommend showing the SELECT statement used to create the view)
+SELECT
+	d.dept_id AS deptID,
+	d.dept_name AS deptName,
+	COUNT(*) AS numWards
+FROM department9171 d
+LEFT JOIN ward9171 w ON d.dept_id = w.dept_id
+GROUP BY d.dept_id;
     
 -- 11b. Using the view, list depts with the highest number of wards. Show
 -- 		deptID, deptName, numWards and STUDENT ID
